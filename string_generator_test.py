@@ -4,15 +4,6 @@ from string_generator import StringGenerator
 
 class MyTestCase(unittest.TestCase):
 
-    def testStringGeneratorObjectIsEmpty(self):
-        gen = StringGenerator()
-        self.assertEqual(gen.build(), '')
-
-    def testWithTermMethodsAddsTerms(self):
-        gen = StringGenerator()
-        gen.term('brown').term('fox')
-        self.assertEquals(gen.terms, {'brown': {'count': 1, 'shuffle': False}, 'fox': {'count': 1, 'shuffle': False}})
-
     def testSingleTermRepeatedGivenNumberTimes(self):
         gen = StringGenerator()
         self.assertEquals(gen.term('brown').repeat(3).build(), 'brown brown brown')
@@ -31,15 +22,63 @@ class MyTestCase(unittest.TestCase):
         self.assertEquals(s.count('jump'), 4)
         self.assertEquals(s.count(' '), 8)
 
-    def testCreateStringWithPrefixedTerms(self):
+    def testCreateStringBasedOnRandomTermWithFixedPrefix(self):
         gen = StringGenerator()
-        s = gen.random_term_of_length(5).prefix('abc').repeat(10).build()
+        s = gen.random_term(5).prefix_fixed('abc').repeat(10).build()
         words = s.split()
         self.assertEquals(s.count(' '), 9)
-        self.assertEquals(words.count(), 10)
+        self.assertEquals(len(words), 10)
         for word in words:
-            self.assertEquals(word.count, 5)
-            self.assertEquals(word.startswith('abc'))
+            self.assertEquals(len(word), 8)
+            self.assertEquals(word.startswith('abc'), True)
+
+    def testCreateStringBaseOnFixedTermWithFixedPrefix(self):
+        gen = StringGenerator()
+        s = gen.term('brown').prefix_fixed('abc').repeat(4).build()
+        self.assertEquals(s, 'abcbrown abcbrown abcbrown abcbrown')
+
+    def testStringWithIncreasingPrefix(self):
+        gen = StringGenerator()
+        s = gen.term('t').prefix_inc('a').repeat(4).build()
+        self.assertEquals(s, 'at aat aaat aaaat')
+
+    # def testBigString(self):
+    #     gen = StringGenerator()
+    #     s = gen.term('brown').repeat(1000).
+    #             term('fox').
+
+    def testStringWith2RepeatByEachTerms(self):
+        gen = StringGenerator()
+        s = gen.term('word').repeat(10).term('fox').prefix_inc('z').each(3).term('jump').each(5).build()
+        self.assertEquals(s, 'word word zfox word jump zafox word word zabfox jump word zabcfox word word zabcdfox word word')
+
+    def testAlphabetIncrementalPrefixGoesBeyondZShouldCycleFromA(self):
+        gen = StringGenerator()
+        s = gen.term('dummy').prefix_alphinc('z').repeat(2).build()
+        self.assertEquals(s, 'zdummy zadummy')
+
+    def testAddFixedPrefixForWordsFromGivenString(self):
+        gen = StringGenerator('red fox jump over lazy dog')
+        s = gen.prefix('a').build()
+        self.assertEquals(s, 'ared afox ajump aover alazy adog')
+
+    def testAddIncPrefixForWordsFromGivenString(self):
+        gen = StringGenerator('red fox jump over lazy dog')
+        s = gen.prefix_inc('a').build()
+        self.assertEquals(s, 'ared aafox aaajump aaaaover aaaaalazy aaaaaadog')
+
+    def testAddAlphaIncPrefixForWordsFromGivenString(self):
+        gen = StringGenerator('red fox jump over lazy dog')
+        s = gen.prefix_alphinc('z').build()
+        self.assertEquals(s, 'zred zafox zabjump zabcover zabcdlazy zabcdedog')
+
+    def testAddDifferentPrefixForWordsFromGivenString(self):
+        gen = StringGenerator('red fox jump')
+        s = gen.prefix('a').prefix_inc('c').prefix_alphinc('o').build()
+        self.assertEquals(s, 'ared cred ored afox ccfox opfox ajump cccjump opqjump')
+
+    # 'a<rand_term_1> a<rand_term_2> a<rand_term_3> a<rand_term_4> a<rand_term_5> a<rand_term_6>'
+    # '<rand_pref_1>a <rand_pref_2>a <rand_pref_3>a'
 
 
 if __name__ == '__main__':
